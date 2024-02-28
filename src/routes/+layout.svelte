@@ -3,7 +3,7 @@
 	import { onMount } from 'svelte';
 	import Header from './Header.svelte';
 	import './styles.css';
-	import { onLCP, onFID, onCLS } from 'web-vitals/attribution';
+	import { onLCP, onFID, onCLS, onINP } from 'web-vitals/attribution';
 
 	$: if (browser) {
 		onMount(() => {
