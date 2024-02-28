@@ -2,7 +2,7 @@
 	import { browser } from '$app/environment';
 	import Header from './Header.svelte';
 	import './styles.css';
-	import { onLCP, onFID, onCLS } from 'web-vitals';
+	import { onLCP, onFID, onCLS } from 'web-vitals/attribution';
 
 	$: if (browser) {
 		console.log('IM IN A BROWSER');
