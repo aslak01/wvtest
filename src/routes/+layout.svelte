@@ -1,14 +1,18 @@
 <script>
 	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 	import Header from './Header.svelte';
 	import './styles.css';
 	import { onLCP, onFID, onCLS } from 'web-vitals/attribution';
 
 	$: if (browser) {
-		console.log('IM IN A BROWSER');
-		onCLS(console.log);
-		onFID(console.log);
-		onLCP(console.log);
+		onMount(() => {
+			console.log('IM IN A BROWSER');
+			onCLS(console.log);
+			onFID(console.log);
+			onLCP(console.log);
+			onINP(console.log);
+		});
 	}
 </script>
 
