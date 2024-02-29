@@ -1,17 +1,19 @@
 <script>
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import { createApiReporter, getDeviceInfo } from '$lib/utils';
+
 	import Header from './Header.svelte';
 	import './styles.css';
 	import { onLCP, onFID, onCLS, onINP } from 'web-vitals/attribution';
 
 	$: if (browser) {
 		onMount(() => {
-			console.log('IM IN A BROWSER');
-			onCLS(console.log);
-			onFID(console.log);
-			onLCP(console.log);
-			onINP(console.log);
+			const sendToAnalytics = createApiReporter('/analytics', { initial: getDeviceInfo() });
+			onCLS(sendToAnalytics);
+			onFID(sendToAnalytics);
+			onLCP(sendToAnalytics);
+			onINP(sendToAnalytics);
 		});
 	}
 </script>

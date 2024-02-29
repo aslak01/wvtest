@@ -59,7 +59,7 @@ export function createApiReporter(
 			const isWebVital = ['FCP', 'TTFB', 'LCP', 'CLS', 'FID'].indexOf(metric.name) !== -1;
 			return {
 				[metric.name]: isWebVital
-					? roundToPrec(metric.value, metric.name === 'CLS' ? 4 : 0)
+					? roundToPrec(metric.value, metric.name === 'CLS' ? 4 : 1)
 					: metric.value
 			};
 		};

@@ -2,6 +2,13 @@
 	import Counter from './Counter.svelte';
 	import welcome from '$lib/images/svelte-welcome.webp';
 	import welcome_fallback from '$lib/images/svelte-welcome.png';
+	import { onMount } from 'svelte';
+	let padding = false;
+	onMount(() => {
+		setTimeout(() => {
+			padding = true;
+		}, 400);
+	});
 </script>
 
 <svelte:head>
@@ -10,7 +17,7 @@
 </svelte:head>
 
 <section>
-	<h1>
+	<h1 class:padding>
 		<span class="welcome">
 			<picture>
 				<source srcset={welcome} type="image/webp" />
@@ -55,5 +62,8 @@
 		height: 100%;
 		top: 0;
 		display: block;
+	}
+	.padding {
+		padding-block: 100px;
 	}
 </style>
