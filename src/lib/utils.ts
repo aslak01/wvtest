@@ -7,7 +7,7 @@ type NetworkInformation = {
 	downlink: number;
 };
 type CreateNetworkInformation = {
-	initial: object;
+	initial?: object;
 	mapMetric?: (metric: Metric, result: Result) => Result;
 	beforeSend?: (result: Result) => Result | void;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,11 +56,9 @@ export function createApiReporter(
 	const mapMetric =
 		opts.mapMetric ||
 		function (metric) {
-			const isWebVital = ['FCP', 'TTFB', 'LCP', 'CLS', 'FID'].indexOf(metric.name) !== -1;
+			const isWebVital = ['FCP', 'TTFB', 'LCP', 'CLS', 'INP', 'FID'].indexOf(metric.name) !== -1;
 			return {
-				[metric.name]: isWebVital
-					? roundToPrec(metric.value, metric.name === 'CLS' ? 4 : 1)
-					: metric.value
+				[metric.name]: metric.value
 			};
 		};
 
@@ -71,26 +69,13 @@ export function createApiReporter(
 
 	// should be the last call to capture latest CLS
 	setTimeout(() => {
-		// Safari does not fire "visibilitychange" on the tab close
-		// So we have 2 options: loose Safari data, or loose LCP/CLS that depends on "visibilitychange" logic.
-		// Current solution: if LCP/CLS supported, use `onHidden` otherwise, use `pagehide` to fire the callback in the end.
-		//
-		// More details: https://github.com/treosh/web-vitals-reporter/issues/3
-		const supportedEntryTypes =
-			(PerformanceObserver && PerformanceObserver.supportedEntryTypes) || [];
-		const isLatestVisibilityChangeSupported = supportedEntryTypes.indexOf('layout-shift') !== -1;
-
-		if (isLatestVisibilityChangeSupported) {
-			const onVisibilityChange = () => {
-				if (document.visibilityState === 'hidden') {
-					sendValues();
-					removeEventListener('visibilitychange', onVisibilityChange, true);
-				}
-			};
-			addEventListener('visibilitychange', onVisibilityChange, true);
-		} else {
-			addEventListener('pagehide', sendValues, { capture: true, once: true });
-		}
+		const onVisibilityChange = () => {
+			if (document.visibilityState === 'hidden') {
+				sendValues();
+				removeEventListener('visibilitychange', onVisibilityChange, true);
+			}
+		};
+		addEventListener('visibilitychange', onVisibilityChange, true);
 	});
 
 	return report;
@@ -101,8 +86,8 @@ export function createApiReporter(
  */
 
 function now() {
-	const perf = typeof performance === 'undefined' ? null : performance;
-	return perf && perf.now ? roundToPrec(perf.now()) : null;
+	if (typeof performance === 'undefined') return null;
+	return performance.now();
 }
 
 /**

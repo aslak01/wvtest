@@ -5,22 +5,28 @@
 
 	import Header from './Header.svelte';
 	import './styles.css';
-	import { onLCP, onTTFB, onCLS, onINP } from 'web-vitals/attribution';
+	import { onLCP, onTTFB, onCLS, onINP, onFCP } from 'web-vitals/attribution';
 
 	$: if (browser) {
-		onMount(() => {
-			const sendToAnalytics = createApiReporter('/analytics', {});
-			onCLS(sendToAnalytics);
-			onTTFB(sendToAnalytics);
-			onLCP(sendToAnalytics);
-			onINP(sendToAnalytics);
+		const sendToAnalytics = createApiReporter('/analytics', {
+			pageView: 'UUID',
+			userId: 'UUID',
+			site: 'siteId',
+			url: 'www.example.com/hei'
 		});
+		onCLS(sendToAnalytics);
+		onTTFB(sendToAnalytics);
+		onLCP(sendToAnalytics);
+		onINP(sendToAnalytics);
+		onFCP(sendToAnalytics);
 	}
+
 	type ChromeWebVitalsType = {
 		pageView: string;
 		userId: string;
 		site: string;
 		url: string;
+		visitDurationAtSend: number;
 		cls?: {
 			value: number;
 			attribution: string;
@@ -37,7 +43,6 @@
 		inp?: {
 			value: number;
 		};
-		visitDurationAtSend: number;
 	};
 </script>
 
