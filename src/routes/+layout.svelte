@@ -5,20 +5,27 @@
 
 	import Header from './Header.svelte';
 	import './styles.css';
-	import { onLCP, onTTFB, onCLS, onINP, onFCP } from 'web-vitals/attribution';
+	import { onTTFB, onINP, onFCP, onFID } from 'web-vitals';
+	import { onCLS, onLCP } from 'web-vitals/attribution';
 
+	function generateUniqueId() {
+		return `v1-${Date.now()}-${Math.floor(Math.random() * (9e12 - 1)) + 1e12}`;
+	}
 	$: if (browser) {
 		const sendToAnalytics = createApiReporter('/analytics', {
-			pageView: 'UUID',
-			userId: 'UUID',
-			site: 'siteId',
-			url: 'www.example.com/hei'
+			initial: {
+				pageView: generateUniqueId(),
+				userId: generateUniqueId(),
+				site: 'siteId',
+				url: 'www.example.com/hei'
+			}
 		});
 		onCLS(sendToAnalytics);
 		onTTFB(sendToAnalytics);
 		onLCP(sendToAnalytics);
 		onINP(sendToAnalytics);
 		onFCP(sendToAnalytics);
+		onFID(sendToAnalytics);
 	}
 
 	type ChromeWebVitalsType = {

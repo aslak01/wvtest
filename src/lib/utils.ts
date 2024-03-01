@@ -1,4 +1,4 @@
-import type { Metric } from 'web-vitals';
+import type { Metric, MetricWithAttribution } from 'web-vitals';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Result = Record<string, any>;
 type NetworkInformation = {
@@ -7,38 +7,40 @@ type NetworkInformation = {
 	downlink: number;
 };
 type CreateNetworkInformation = {
-	initial?: object;
+	initial?: {
+		visitDurationAtSend: number | null;
+		pageView: string;
+		userId: string;
+		site: string;
+		url: string;
+	};
 	mapMetric?: (metric: Metric, result: Result) => Result;
 	beforeSend?: (result: Result) => Result | void;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	onSend?: (url: string, result: Result) => any;
 };
 
-const initialOpts = {
-	initial: {}
-};
 export function createApiReporter(
 	url: string,
 	opts: CreateNetworkInformation
-): (metric: Metric) => void {
+): (metric: Metric | MetricWithAttribution) => void {
 	let isSent = false;
 	let isCalled = false;
-	let result: Result = {
-		id: generateUniqueId(),
-		duration: null
-	};
+	let result = /** @type {Result} */ { ...opts.initial };
+	// let result: Result = {
+	// 	visitDurationAtSend: null
+	// };
 
 	const sendValues = () => {
 		if (isSent) return; // data is already sent
 		if (!isCalled) return; // no data collected
 
-		result.duration = now();
+		result.visitDurationAtSend = now();
 		if (opts.beforeSend) {
 			const newResult = opts.beforeSend(result);
 			if (newResult) result = { ...result, ...newResult };
 		}
 		isSent = true;
-		console.log(result);
 		if (opts.onSend) {
 			opts.onSend(url, result);
 		} else {
@@ -47,7 +49,8 @@ export function createApiReporter(
 				return navigator.sendBeacon(url, JSON.stringify(result));
 			}
 			const client = new XMLHttpRequest();
-			client.open('POST', url, false); // third parameter indicates sync xhr
+			// third parameter indicates sync xhr
+			client.open('POST', url, false);
 			client.setRequestHeader('Content-Type', 'text/plain;charset=UTF-8');
 			client.send(JSON.stringify(result));
 		}
@@ -57,8 +60,16 @@ export function createApiReporter(
 		opts.mapMetric ||
 		function (metric) {
 			const isWebVital = ['FCP', 'TTFB', 'LCP', 'CLS', 'INP', 'FID'].indexOf(metric.name) !== -1;
+			if (attributionElement(metric)) {
+				return {
+					[metric.name]: {
+						value: roundToPrec(metric.value, 5),
+						element: attributionElement(metric)
+					}
+				};
+			}
 			return {
-				[metric.name]: metric.value
+				[metric.name]: { value: roundToPrec(metric.value, 0) }
 			};
 		};
 
@@ -87,7 +98,7 @@ export function createApiReporter(
 
 function now() {
 	if (typeof performance === 'undefined') return null;
-	return performance.now();
+	return roundToPrec(performance.now(), 0);
 }
 
 /**
@@ -103,6 +114,23 @@ function roundToPrec(val: number, precision = 0): number {
  * https://github.com/GoogleChrome/web-vitals/blob/master/src/lib/generateUniqueID.ts
  */
 
-function generateUniqueId() {
-	return `v1-${Date.now()}-${Math.floor(Math.random() * (9e12 - 1)) + 1e12}`;
+function attributionElement(metric: Metric | MetricWithAttribution): string | null {
+	if ('attribution' in metric && metric.attribution && typeof metric.attribution === 'object') {
+		const { attribution } = metric;
+		if (
+			'largestShiftTarget' in attribution &&
+			attribution.largestShiftTarget &&
+			typeof attribution.largestShiftTarget === 'string' &&
+			attribution.largestShiftTarget.length > 0
+		) {
+			return attribution.largestShiftTarget;
+		} else if (
+			'element' in attribution &&
+			typeof attribution?.element === 'string' &&
+			attribution.element.length > 0
+		) {
+			return attribution.element;
+		}
+	}
+	return null;
 }
