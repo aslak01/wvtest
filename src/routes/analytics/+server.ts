@@ -12,10 +12,11 @@ export async function GET(event: Event) {
 }
 
 /** @type {import('./$types').RequestHandler} */
-export async function POST({ request }) {
+export async function POST({ request }: { request: Request }) {
 	// console.log('REQ', request);
 
 	const data = await request.json();
 	console.log(data);
 	return new Response('Hello', data);
+	return json({ success: true });
 }

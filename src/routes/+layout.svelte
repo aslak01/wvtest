@@ -1,21 +1,44 @@
-<script>
+<script lang="ts">
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
-	import { createApiReporter, getDeviceInfo } from '$lib/utils';
+	import { createApiReporter } from '$lib/utils';
 
 	import Header from './Header.svelte';
 	import './styles.css';
-	import { onLCP, onFID, onCLS, onINP } from 'web-vitals/attribution';
+	import { onLCP, onTTFB, onCLS, onINP } from 'web-vitals/attribution';
 
 	$: if (browser) {
 		onMount(() => {
-			const sendToAnalytics = createApiReporter('/analytics', { initial: getDeviceInfo() });
+			const sendToAnalytics = createApiReporter('/analytics', {});
 			onCLS(sendToAnalytics);
-			onFID(sendToAnalytics);
+			onTTFB(sendToAnalytics);
 			onLCP(sendToAnalytics);
 			onINP(sendToAnalytics);
 		});
 	}
+	type ChromeWebVitalsType = {
+		pageView: string;
+		userId: string;
+		site: string;
+		url: string;
+		cls?: {
+			value: number;
+			attribution: string;
+		};
+		fcp?: {
+			value: number;
+		};
+		lcp?: {
+			value: number;
+		};
+		fid?: {
+			value: number;
+		};
+		inp?: {
+			value: number;
+		};
+		visitDurationAtSend: number;
+	};
 </script>
 
 <div class="app">

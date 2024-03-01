@@ -19,14 +19,13 @@ const initialOpts = {
 };
 export function createApiReporter(
 	url: string,
-	opts: CreateNetworkInformation = initialOpts
+	opts: CreateNetworkInformation
 ): (metric: Metric) => void {
 	let isSent = false;
 	let isCalled = false;
 	let result: Result = {
 		id: generateUniqueId(),
-		duration: null,
-		...opts.initial
+		duration: null
 	};
 
 	const sendValues = () => {
@@ -39,6 +38,7 @@ export function createApiReporter(
 			if (newResult) result = { ...result, ...newResult };
 		}
 		isSent = true;
+		console.log(result);
 		if (opts.onSend) {
 			opts.onSend(url, result);
 		} else {
@@ -94,42 +94,6 @@ export function createApiReporter(
 	});
 
 	return report;
-}
-
-/**
- * Get device information.
- * - Effective connection type: https://developer.mozilla.org/en-US/docs/Web/API/NetworkInformation
- * - Device memory: https://developer.mozilla.org/en-US/docs/Web/API/Navigator/deviceMemory
- */
-
-type ExtendedNavigator = Navigator & {
-	deviceMemory: number;
-	connection: NetworkInformation;
-};
-
-type Nav = null | Navigator;
-export function getDeviceInfo() {
-	const nav: Nav = typeof navigator === 'undefined' ? null : navigator;
-	const conn =
-		nav && 'connection' in nav && nav.connection ? (nav as ExtendedNavigator).connection : null;
-	const mem =
-		nav && 'deviceMemory' in nav && nav.deviceMemory
-			? (nav as ExtendedNavigator).deviceMemory
-			: null;
-	return {
-		url: location ? location.href : null,
-		referrer: document ? document.referrer : null,
-		userAgent: nav ? nav.userAgent : null,
-		memory: mem ? mem : undefined,
-		cpus: nav ? nav.hardwareConcurrency : undefined,
-		connection: conn
-			? {
-					effectiveType: conn.effectiveType,
-					rtt: conn.rtt,
-					downlink: conn.downlink
-				}
-			: undefined
-	};
 }
 
 /**
